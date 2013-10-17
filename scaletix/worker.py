@@ -40,6 +40,7 @@ class WorkerProtocol():
         self.original_factory = original_factory
 
     def fd_received(self, fd, message):
+        print("fd (%s) Received by worker [%s]" % (fd, os.getpid()))
         reactor.adoptStreamConnection(fd, socket.AF_INET, self.original_factory)
 
 
@@ -47,18 +48,21 @@ class WorkerProtocol():
 class ProcessWorker(object):
 
     def __init__(self, cf):
-        self.parent, self.me = socket.socketpair()
+        self.manager, self.worker = socket.socketpair()
         self.factory = cf
-        self.process = Process(target=self._worker_run)
+        self.process = Process(target=self._worker_run, args=(self.worker,))
+        self.process.start()
 
-    def _worker_run(self):
-        recvmsg_receiver = WorkerConnection(self.me, WorkerProtocol(self.factory))
+    def _worker_run(self, my_sock):
+        print("Worker ready [%s]" % os.getpid())
+        recvmsg_receiver = WorkerConnection(my_sock, WorkerProtocol(self.factory))
+
         reactor.addReader(recvmsg_receiver)
         reactor.run()
 
     #TODO: replace this blocking call! (doWrite)
     def handle_connection(self, sock, message=b'a message'):
-        self.parent.sendmsg([message], [(socket.SOL_SOCKET, socket.SCM_RIGHTS, pack('i', sock.fileno()))])
+        self.manager.sendmsg([message], [(socket.SOL_SOCKET, socket.SCM_RIGHTS, pack('i', sock.fileno()))])
         # close socket on the load balancer process (parent).
         sock.close()
 
@@ -66,5 +70,5 @@ class ProcessWorker(object):
         self.process.start()
 
     def terminate(self):
-        self.parent.close()
+        self.manager.close()
         self.process.terminate()

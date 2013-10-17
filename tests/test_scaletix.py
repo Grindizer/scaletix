@@ -33,7 +33,6 @@ class TestScaletix(unittest.TestCase):
         # instances server run into different process'
         client_factory = TestClientFactory()
         client_factory.client_deferred_list = [Deferred(), Deferred()]
-        time.sleep(1)
         cl1 = reactor.connectTCP('localhost', 8118, client_factory)
         cl2 = reactor.connectTCP('localhost', 8118, client_factory)
 
@@ -41,7 +40,7 @@ class TestScaletix(unittest.TestCase):
         def check_result(r_list):
             self.assertEqual(len(r_list), 2, "Both client should have been called. (%s)" % repr(r_list))
             self.assertTrue(r_list[0][0] != r_list[1][0], """pid returned from the first client should be different from
-            the one returned by the second client""" )
+            the one returned by the second client""")
 
             self.assertTrue(r_list[0][1] == b'0')
             self.assertTrue(r_list[1][1] == b'1')

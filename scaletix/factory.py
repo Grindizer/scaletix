@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import socket
 
 from twisted.internet.protocol import ServerFactory, Protocol
 from scaletix.worker import ProcessWorker
@@ -8,7 +9,7 @@ from scaletix.worker import ProcessWorker
 class ScaleProtocol(Protocol):
     def connectionMade(self):
         self.factory.i += 1
-        worker = self.factory.workers[self.factory.i % 2]  #dispatch_strategy.get_next()
+        worker = self.factory.workers[self.factory.i % 3]  #dispatch_strategy.get_next()
         worker.handle_connection(self.transport.getHandle())
 
 
@@ -30,10 +31,12 @@ class ScaleFactory(ServerFactory):
         self.workers = []
 
     def startFactory(self):
+        #FIX: FileExistError pb.
+        p, s = socket.socketpair()
         self.workers = [ProcessWorker(self.base_factory) for i in range(self.core)]
 
-        for worker in self.workers:
-            worker.start()
+        #for worker in self.workers:
+        #    worker.start()
 
     def stopFactory(self):
         for worker in self.workers:
