@@ -4,7 +4,7 @@ import socket
 
 from twisted.internet.protocol import ServerFactory, Protocol
 from scaletix.dispatcher import RoundRobinDispatcher
-from scaletix.worker import ProcessWorker
+from scaletix.worker import Worker
 
 
 class ScaleProtocol(Protocol):
@@ -31,7 +31,7 @@ class ScaleFactory(ServerFactory):
     def startFactory(self):
         #FIX: FileExistError pb.
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._workers = [ProcessWorker(self.base_factory) for i in range(self.core)]
+        self._workers = [Worker(self.base_factory) for i in range(self.core)]
         #self.dispatcher = self.dispatcher_strategy(self.workers)
         self.dispatch_strategy = RoundRobinDispatcher(self._workers)
 

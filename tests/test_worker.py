@@ -1,4 +1,4 @@
-from scaletix.worker import ProcessWorker
+from scaletix.worker import Worker
 
 __author__ = 'nacim'
 

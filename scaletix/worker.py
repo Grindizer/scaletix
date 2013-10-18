@@ -45,7 +45,7 @@ class WorkerProtocol():
 
 class WorkerProcess(Process):
     def __init__(self, factory, pipe):
-        super(_ProcessWorker, self).__init__()
+        super(WorkerProcess, self).__init__()
         self.factory = factory
         self.pipe = pipe
 
@@ -64,7 +64,7 @@ class Worker(object):
 
         self.factory = cf
         self.nbr_handle = 0
-        self.process = WorkerProcess(self.factory, self.worker)
+        self.process = WorkerProcess(self.factory, worker)
         self.process.start()
 
 
