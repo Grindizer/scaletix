@@ -3,9 +3,11 @@ from multiprocessing import Process
 import os
 import socket
 from struct import pack, unpack
+import psutil
 from twisted.internet import reactor
+from zope.component import adapter
 from zope.interface import implementer
-from scaletix.interface import IWorker
+from scaletix.interface import IWorker, IUsageStat
 
 __author__ = 'nacim'
 
@@ -85,3 +87,13 @@ class Worker(object):
     def terminate(self):
         self.manager.close()
         self.process.terminate()
+
+@implementer(IUsageStat)
+@adapter(IWorker)
+class WorkerUsage(object):
+    def __init__(self, worker):
+        self.worker = worker
+        self.proc = psutil.Process(self.worker.id)
+
+    def get_connections(self):
+        return self.proc.get_connections()
