@@ -3,17 +3,16 @@
 import socket
 
 from twisted.internet.protocol import ServerFactory, Protocol
+from scaletix.dispatcher import RoundRobinDispatcher
 from scaletix.worker import ProcessWorker
 
 
 class ScaleProtocol(Protocol):
     def connectionMade(self):
-        self.factory.i += 1
-        worker = self.factory.workers[self.factory.i % 3]  #dispatch_strategy.get_next()
+        worker = self.factory.dispatch_strategy.get_next()
         worker.handle_connection(self.transport.getHandle())
 
 
-# TODO: LoadBalancing strategy
 class ScaleFactory(ServerFactory):
     """ Wrap a twisted factory.
     The result is a factory that run the base server protocol in a pool of worker (process)
@@ -21,25 +20,26 @@ class ScaleFactory(ServerFactory):
     """
 
     protocol = ScaleProtocol
-    #TODO: implement dispatcher strategy.
-    i = -1
+    dispatch_strategy = None
+    _workers = []
 
     #TODO: make core default value = nbr_core - 1 (may be)
     def __init__(self, base_factory, core=2):
         self.base_factory = base_factory
         self.core = core
-        self.workers = []
 
     def startFactory(self):
         #FIX: FileExistError pb.
-        p, s = socket.socketpair()
-        self.workers = [ProcessWorker(self.base_factory) for i in range(self.core)]
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._workers = [ProcessWorker(self.base_factory) for i in range(self.core)]
+        #self.dispatcher = self.dispatcher_strategy(self.workers)
+        self.dispatch_strategy = RoundRobinDispatcher(self._workers)
 
         #for worker in self.workers:
         #    worker.start()
 
     def stopFactory(self):
-        for worker in self.workers:
+        for worker in self._workers:
             worker.terminate()
 
 

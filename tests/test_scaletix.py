@@ -8,6 +8,7 @@ test_scaletix
 Tests for `scaletix` module.
 """
 import time
+
 from twisted.internet import reactor
 from twisted.internet.defer import gatherResults, Deferred
 
@@ -18,7 +19,7 @@ from tests.test_application import TestFactory
 from tests.test_application import TestClientFactory
 
 
-class TestScaletix(unittest.TestCase):
+class TestTCPScaletix(unittest.TestCase):
 
     def setUp(self):
         pass
@@ -33,12 +34,13 @@ class TestScaletix(unittest.TestCase):
         # instances server run into different process'
         client_factory = TestClientFactory()
         client_factory.client_deferred_list = [Deferred(), Deferred()]
+        time.sleep(1)
         cl1 = reactor.connectTCP('localhost', 8118, client_factory)
         cl2 = reactor.connectTCP('localhost', 8118, client_factory)
 
         result = gatherResults(client_factory.client_deferred_list)
         def check_result(r_list):
-            self.assertEqual(len(r_list), 2, "Both client should have been called. (%s)" % repr(r_list))
+            self.assertEqual(len(r_list), 2, "Both client should have been called. ({0})".format(repr(r_list)))
             self.assertTrue(r_list[0][0] != r_list[1][0], """pid returned from the first client should be different from
             the one returned by the second client""")
 
@@ -46,15 +48,15 @@ class TestScaletix(unittest.TestCase):
             self.assertTrue(r_list[1][1] == b'1')
 
         result.addCallback(check_result)
-
-        def clean_reactor(ports, clients):
-            for p in ports:
-                p.stopListening()
-            for client in clients:
-                client.transport.loseConnection()
-
-        self.addCleanup(clean_reactor, [port], [cl1, cl2])
+        self.addCleanup(self._clean_reactor, [port], [cl1, cl2])
         return result
+
+    def _clean_reactor(self, ports, clients):
+        for p in ports:
+            p.stopListening()
+
+        for client in clients:
+            client.transport.loseConnection()
 
 
     def tearDown(self):

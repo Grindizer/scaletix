@@ -31,7 +31,7 @@ class WorkerConnection():
         self.sock.close()
 
     def logPrefix(self):
-        return "WORKER-%s: " % os.getpid()
+        return "WORKER-{0}: ".format(os.getpid())
 
 
 class WorkerProtocol():
@@ -40,31 +40,45 @@ class WorkerProtocol():
         self.original_factory = original_factory
 
     def fd_received(self, fd, message):
-        print("fd (%s) Received by worker [%s]" % (fd, os.getpid()))
+        print("fd ({0}) Received by worker [{1}]".format(fd, os.getpid()))
         reactor.adoptStreamConnection(fd, socket.AF_INET, self.original_factory)
 
+class WorkerProcess(Process):
+    def __init__(self, factory, pipe):
+        super(_ProcessWorker, self).__init__()
+        self.factory = factory
+        self.pipe = pipe
 
-@implementer(IWorker)
-class ProcessWorker(object):
-
-    def __init__(self, cf):
-        self.manager, self.worker = socket.socketpair()
-        self.factory = cf
-        self.process = Process(target=self._worker_run, args=(self.worker,))
-        self.process.start()
-
-    def _worker_run(self, my_sock):
-        print("Worker ready [%s]" % os.getpid())
-        recvmsg_receiver = WorkerConnection(my_sock, WorkerProtocol(self.factory))
+    def run(self):
+        print("Process Worker [{0}] ready".format(os.getpid()))
+        recvmsg_receiver = WorkerConnection(self.pipe, WorkerProtocol(self.factory))
 
         reactor.addReader(recvmsg_receiver)
         reactor.run()
+
+#TODO: separate Process stuff from worker logic: (create a ProcessWorker that inherite Process class.)
+@implementer(IWorker)
+class Worker(object):
+    def __init__(self, cf):
+        self.manager, worker = socket.socketpair()
+
+        self.factory = cf
+        self.nbr_handle = 0
+        self.process = WorkerProcess(self.factory, self.worker)
+        self.process.start()
+
 
     #TODO: replace this blocking call! (doWrite)
     def handle_connection(self, sock, message=b'a message'):
         self.manager.sendmsg([message], [(socket.SOL_SOCKET, socket.SCM_RIGHTS, pack('i', sock.fileno()))])
         # close socket on the load balancer process (parent).
+        self.nbr_handle += 1
         sock.close()
+
+    @property
+    def id(self):
+        return self.process.pid
+
 
     def start(self):
         self.process.start()
