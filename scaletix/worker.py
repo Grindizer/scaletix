@@ -56,7 +56,6 @@ class WorkerProcess(Process):
         reactor.addReader(recvmsg_receiver)
         reactor.run()
 
-#TODO: separate Process stuff from worker logic: (create a ProcessWorker that inherite Process class.)
 @implementer(IWorker)
 class Worker(object):
     def __init__(self, cf):

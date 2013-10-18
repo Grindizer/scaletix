@@ -24,3 +24,4 @@ class RandomDispatcher(object):
     def get_next(self, data=None):
         return random.choice(self.workers)
 
+#TODO: Write dispatcher that work from nbr_handled_connections.
