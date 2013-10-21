@@ -13,7 +13,7 @@ class IWorker(Interface):
     def handle_connection(socket):
         """ pass the socket to this worker """
 
-#TODO: implement iusagestat adapter for worker (using psutil ?).
+
 class IUsageStat(Interface):
     def get_nbr_handled_connections():
         """ return all connections handled till now. (include closed)."""

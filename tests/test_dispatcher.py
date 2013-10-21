@@ -33,7 +33,6 @@ class TestDispatcherRandom(TestCase):
         self.assertIn(self.dispatcher.get_next(), self.workers)
 
 
-#TODO: write test for a dispatcher using nbr open connections.
 class TestDispatcherMinOpenConnection(TestCase):
     def setUp(self):
         self.base_factory = TestFactory()

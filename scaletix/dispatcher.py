@@ -25,7 +25,7 @@ class RandomDispatcher(object):
     def get_next(self, data=None):
         return random.choice(self.workers)
 
-#TODO: Write dispatcher that work from nbr_handled_connections.
+
 @implementer(IDispatchStrategy)
 class LeastBusyDispatcher(object):
     def __init__(self, workers):
