@@ -93,7 +93,20 @@ class Worker(object):
 class WorkerUsage(object):
     def __init__(self, worker):
         self.worker = worker
+        #TODO: check if we have to use an asynchronous version of the psutil lib ?!
         self.proc = psutil.Process(self.worker.id)
 
     def get_connections(self):
         return self.proc.get_connections()
+
+    def get_cpu_times(self):
+        return self.proc.get_cpu_times()
+
+    def get_cpu_usage(self):
+        return self.proc.get_cpu_percent(interval=0) / 100.0
+
+    def get_memory_usage(self):
+        return self.proc.get_memory_info()
+
+    def get_nbr_handled_connections(self):
+        return self.worker.nbr_handle

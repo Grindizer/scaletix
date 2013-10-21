@@ -15,7 +15,7 @@ from twisted.internet.defer import gatherResults, Deferred
 from twisted.trial import unittest
 
 from scaletix.factory import ScaleFactory
-from tests.test_application import TestFactory
+from tests.test_application import TestFactory, TestClientProtocol
 from tests.test_application import TestClientFactory
 
 
@@ -34,7 +34,7 @@ class TestTCPScaletix(unittest.TestCase):
         # instances server run into different process'
         client_factory = TestClientFactory()
         client_factory.client_deferred_list = [Deferred(), Deferred()]
-        time.sleep(1)
+        #time.sleep(1)
         cl1 = reactor.connectTCP('localhost', 8118, client_factory)
         cl2 = reactor.connectTCP('localhost', 8118, client_factory)
 
@@ -51,12 +51,14 @@ class TestTCPScaletix(unittest.TestCase):
         self.addCleanup(self._clean_reactor, [port], [cl1, cl2])
         return result
 
+    test_multiprocessing_factory.timeout = 2
+
     def _clean_reactor(self, ports, clients):
         for p in ports:
             p.stopListening()
 
         for client in clients:
-            client.transport.loseConnection()
+            client.disconnect()
 
 
     def tearDown(self):

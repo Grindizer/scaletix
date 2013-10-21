@@ -24,8 +24,9 @@ class ScaleFactory(ServerFactory):
     _workers = []
 
     #TODO: make core default value = nbr_core - 1 (may be)
-    def __init__(self, base_factory, core=2):
+    def __init__(self, base_factory, core=2, dispatcher_factory=RoundRobinDispatcher):
         self.base_factory = base_factory
+        self.dispatcher_factory = dispatcher_factory
         self.core = core
 
     def startFactory(self):
@@ -33,7 +34,7 @@ class ScaleFactory(ServerFactory):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._workers = [Worker(self.base_factory) for i in range(self.core)]
         #self.dispatcher = self.dispatcher_strategy(self.workers)
-        self.dispatch_strategy = RoundRobinDispatcher(self._workers)
+        self.dispatch_strategy = self.dispatcher_factory(self._workers)
 
         #for worker in self.workers:
         #    worker.start()
