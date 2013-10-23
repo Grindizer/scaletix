@@ -29,7 +29,7 @@ Example
 
 This will scale the twisted HTTP server to run over a pool of 3 process.
 
-Each time client connect to the server, the resulting socket is handled over to one of the workers using "sendmsg".
+Each time client connect to the server, the resulting socket is passed over to one of the workers using "sendmsg".
 
 ::
 
