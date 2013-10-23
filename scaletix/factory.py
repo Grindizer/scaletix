@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import os
 import socket
 
 from twisted.internet.protocol import ServerFactory, Protocol
 from scaletix.dispatcher import RoundRobinDispatcher
 from scaletix.worker import Worker
 
-
+#TODO: add logging capability (twisted.python.log)
 class ScaleProtocol(Protocol):
     def connectionMade(self):
         worker = self.factory.dispatch_strategy.get_next()
@@ -30,14 +31,10 @@ class ScaleFactory(ServerFactory):
         self.core = core
 
     def startFactory(self):
-        #FIX: FileExistError pb.
+        #FIX: FileExistError pb, still with epollreactor ! https://twistedmatrix.com/trac/ticket/6796
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._workers = [Worker(self.base_factory) for i in range(self.core)]
-        #self.dispatcher = self.dispatcher_strategy(self.workers)
         self.dispatch_strategy = self.dispatcher_factory(self._workers)
-
-        #for worker in self.workers:
-        #    worker.start()
 
     def stopFactory(self):
         for worker in self._workers:

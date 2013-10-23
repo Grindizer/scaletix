@@ -3,15 +3,15 @@ from multiprocessing import Process
 import os
 import socket
 from struct import pack, unpack
-import psutil
 from twisted.internet import reactor
+from twisted.python import log
 from zope.component import adapter
 from zope.interface import implementer
 from scaletix.interface import IWorker, IUsageStat
 
 __author__ = 'nacim'
 
-
+#TODO: handle start/stop (original)factory
 class WorkerConnection():
     # protocol ==> IWorkerProtocol ?!
     # socket of type UNIX only.
@@ -25,6 +25,13 @@ class WorkerConnection():
             if anc[1] == socket.SCM_RIGHTS:
                 fd = unpack('i', anc[2])[0]
                 self.protocol.fd_received(fd, msg)
+
+    #TODO: fix doWrite error ?!
+    #def doWrite(self):
+    #    print("[{0}] XXX DOWRITE CALLED WHEN IT SHOULD NOT: fd={1} XXX".format(os.getpid(), self.sock.fileno()))
+    #    print("[{0}] XXX readers={1}, writers={2} XXX".format(os.getpid(), reactor._reads, reactor._writes))
+    #    #sys.exit(1)
+
 
     def fileno(self):
         return self.sock.fileno()
@@ -42,7 +49,7 @@ class WorkerProtocol():
         self.original_factory = original_factory
 
     def fd_received(self, fd, message):
-        print("fd ({0}) Received by worker [{1}]".format(fd, os.getpid()))
+        #print("fd ({0}) Received by worker [{1}]".format(fd, os.getpid()))
         reactor.adoptStreamConnection(fd, socket.AF_INET, self.original_factory)
 
 class WorkerProcess(Process):
@@ -52,7 +59,7 @@ class WorkerProcess(Process):
         self.pipe = pipe
 
     def run(self):
-        print("Process Worker [{0}] ready".format(os.getpid()))
+        log.msg(("[{0}] Process Worker ready".format(os.getpid())))
         recvmsg_receiver = WorkerConnection(self.pipe, WorkerProtocol(self.factory))
 
         reactor.addReader(recvmsg_receiver)
@@ -94,6 +101,7 @@ class WorkerUsage(object):
     def __init__(self, worker):
         self.worker = worker
         #TODO: check if we have to use an asynchronous version of the psutil lib ?!
+        import psutil
         self.proc = psutil.Process(self.worker.id)
 
     def get_connections(self):
