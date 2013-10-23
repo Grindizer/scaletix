@@ -29,8 +29,6 @@ Example
 
 This will scale the twisted HTTP server to run over a pool of 3 process.
 
-Each time client connect to the server, the resulting socket is passed over to one of the workers using "sendmsg".
-
 ::
 
     from twisted.web import server, resource
@@ -54,6 +52,14 @@ Each time client connect to the server, the resulting socket is passed over to o
     reactor.listenTCP(8080, scaled_site)
 
     reactor.run()
+
+
+How does it work
+----------------
+
+Each time a client connect to the server, the resulting socket is passed over to one of the workers using "sendmsg".
+
+And thus, the load balancer do not work by redirecting data that it receives, but it rather passes over the socket to one of the workers and let it handle all read and write operations.
 
 
 Features
