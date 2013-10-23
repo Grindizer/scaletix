@@ -1,1 +1,2 @@
-twisted
+Twisted==13.1.0
+zope.component==4.1.0
